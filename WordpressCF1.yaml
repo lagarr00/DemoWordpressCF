@@ -302,8 +302,8 @@ Resources:
             sudo mount /var/www/wordpress
             sudo cp -r wordpress/* /var/www/wordpress
             sudo service restart
-            (crontab -l 2>/dev/null || true; echo "*/5  * * * * stress -c 4 -t 300s") | crontab -
-            (crontab -l 2>/dev/null || true; echo "*/8  * * * * /home/ubuntu/stop.sh") | crontab -
+            (crontab -l 2>/dev/null || true; echo '*/5  * * * * stress -c 4 -t 300s') | crontab -
+            (crontab -l 2>/dev/null || true; echo '*/8  * * * * /home/ubuntu/stop.sh') | crontab -
             sudo service cron restart
             echo 'for i in $(ps -aux | grep stress | awk "{print $2}"); do kill -9 $i; done' >> ~/stop.sh
             sudo chmod +x ~/stop.sh
