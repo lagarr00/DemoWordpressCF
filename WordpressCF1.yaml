@@ -1,12 +1,12 @@
 Parameters:
-##########  Key pair name                        #########
+##########  Key pair name                        ###################################
   KeyNames:
     Description: Key Pair for EC2
     Type: 'AWS::EC2::KeyPair::KeyName'
     Default: id_rsa
 
 Resources:
-##########  Principal infrastructure             ########
+##########  Principal infrastructure             ###################################
   VPC:
     Type: AWS::EC2::VPC
     Properties:
