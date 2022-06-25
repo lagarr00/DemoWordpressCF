@@ -6,7 +6,7 @@ Parameters:
     Default: id_rsa
 
 Resources:
-##########  Principal infrastructure             ###################################
+##########  Principal infrastructure             ##################################
   VPC:
     Type: AWS::EC2::VPC
     Properties:
