@@ -1,0 +1,427 @@
+Parameters:
+##########  Key pair name                        ##########
+  KeyNames:
+    Description: Key Pair for EC2
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    Default: id_rsa
+
+Resources:
+##########  Principal infrastructure             ##########
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value: VPC-CF
+##########  Internet Gateway                     ###########
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: IGW-CF
+##########  Internet Gateway attaching to vpc    ##########
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+##########  Public Subnet 1 Gold image           ##########
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: us-east-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PubSub1-CF
+##########  Public Subnet 2 Gold image           ##########
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: us-east-1b
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PubSub2-CF
+##########  Private Subnet 1 Wordpress servers   ##########
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.3.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: us-east-1a
+      Tags:
+        - Key: Name
+          Value: PriSub1-CF
+##########  Private Subnet 2 Wordpress servers   ##########
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.4.0/24
+      AvailabilityZone: us-east-1b
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: PriSub2-CF
+##########  Private Subnet 3 RDS Database        ##########
+  PrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.5.0/24
+      AvailabilityZone: us-east-1a
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: PriSub3-CF
+##########  Private Subnet 4 RDS Database        ##########
+  PrivateSubnet4:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.6.0/24
+      AvailabilityZone: us-east-1b
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: PriSub4-CF
+##########  Public Route table                   ##########
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: PubRT-CF
+##########  Public Route table                   ##########
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+##########  Public Route table association 1     ##########
+  PublicSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+##########  Public Route table association 2     ##########
+  PublicSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+##########  Private Route table association 1    ##########
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: PriRT1-CF
+##########  Private Route table 1 association    ##########
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+##########  Private Route table 2 association    ##########
+  PrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable1
+##########  Private Route table 2                ##########
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: PriRT2-CF
+##########  Private Route table 3 association    ##########
+  PrivateSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      RouteTableId: !Ref PrivateRouteTable2
+##########  Private Route table 4 association    ##########
+  PrivateSubnetRouteTableAssociation4:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet4
+      RouteTableId: !Ref PrivateRouteTable2
+################################################################
+  ElasticIP1:
+    Type: AWS::EC2::EIP
+    #Condition: EnabledNatGateway
+    Properties:
+      Domain: vpc
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    #Condition: EnabledNatGateway
+    Properties:
+      AllocationId: !GetAtt ElasticIP1.AllocationId
+      SubnetId: !Ref PublicSubnet1
+
+  RouteNatGateway:
+    Type: AWS::EC2::Route
+    DependsOn: [ NatGateway ]
+    #Condition: EnabledNatGateway
+    Properties:
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref NatGateway
+      RouteTableId: !Ref PrivateRouteTable1
+################################################################
+  ElasticIP2:
+    Type: AWS::EC2::EIP
+    #Condition: EnabledNatGateway
+    Properties:
+      Domain: vpc
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    #Condition: EnabledNatGateway
+    Properties:
+      AllocationId: !GetAtt ElasticIP2.AllocationId
+      SubnetId: !Ref PublicSubnet2
+
+  RouteNatGateway2:
+    Type: AWS::EC2::Route
+    DependsOn: [ NatGateway ]
+    #Condition: EnabledNatGateway
+    Properties:
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref NatGateway2
+      RouteTableId: !Ref PrivateRouteTable2
+################### RDS Availability zones configuration ########
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: "RDS-Sub-Gpo"
+      DBSubnetGroupDescription: "RDS-Sub-Gpo"
+      SubnetIds:
+        - !Ref PrivateSubnet3
+        - !Ref PrivateSubnet4
+################### RDS Proxy ##################################
+  RDSProxySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: "Security Group for RDS Proxy"
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          FromPort: 3306 #!Ref RDSDBPort
+          ToPort: 3306 #!Ref RDSDBPort
+          SourceSecurityGroupId: !Ref EC2SecurityGroup
+        - IpProtocol: "tcp"
+          FromPort: 3306 #!Ref RDSDBPort
+          ToPort: 3306 #!Ref RDSDBPort
+################### RDS Security group #########################
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security Group RDS-Gpo"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          FromPort: 3306 #!Ref RDSDBPort
+          ToPort: 3306 #!Ref RDSDBPort
+          SourceSecurityGroupId: !Ref EC2SecurityGroup
+        - IpProtocol: tcp
+          SourceSecurityGroupId: !Ref RDSProxySecurityGroup
+          FromPort: 3306
+          ToPort: 3306
+################### RDS instance ###############################
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: wordpress
+      Engine: mysql
+      EngineVersion: 5.7
+      DBInstanceClass: db.t3.medium
+      AllocatedStorage: 20
+      MultiAZ: true
+      StorageType: gp2
+      MasterUsername: wordpress
+      MasterUserPassword: wordpress
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      PubliclyAccessible: false
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+################### Generate AMI image #########################
+    # Genera AMI de instancia Wordpress-Gold
+    # aws ec2 create-image --region us-east-1 --instance-id i-0992541e4cca84d05 --name "AMI-Wordpress" --no-reboot
+################### Generate gold image ########################
+  GoldInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-052efd3df9dad4825
+      InstanceType: t3.medium
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      SubnetId: !Ref PublicSubnet1    #us-east-1a
+      KeyName: !Ref KeyNames
+      UserData: 
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash -xe
+            sudo apt-get update -y
+            sudo apt-get install nfs-kernel-server nfs-common stress apache2 mysql-server php perl php-curl php-gd php-mbstring php-xml php-xmlrpc php-soap php-intl php-zip libapache2-mod-php php-mysql -y
+            sudo su -
+            mkdir /var/www/wordpress
+            echo "${FileSystemEFS}.efs.${AWS::Region}.amazonaws.com:/ /var/www/wordpress nfs4 rw,hard,intr,rsize=8192,wsize=8192,timeo=14 0 0" >> /etc/fstab
+            su ubuntu
+            cd /opt
+            sudo wget https://wordpress.org/latest.tar.gz
+            sudo tar -xvzf latest.tar.gz
+            sudo wget https://raw.githubusercontent.com/ACloudGuru-Resources/course-aws-certified-solutions-architect-associate/main/lab/5/000-default.conf
+            sudo cp wordpress/wp-config-sample.php wordpress/wp-config.php
+
+            sudo sed -i "s/.*DB_NAME.*/define( 'DB_NAME', 'wordpress');/g" wordpress/wp-config.php
+            sudo sed -i "s/.*DB_USER.*/define( 'DB_USER', 'wordpress');/g" wordpress/wp-config.php
+            sudo sed -i "s/.*DB_PASSWORD.*/define( 'DB_PASSWORD', 'wordpress');/g" wordpress/wp-config.php
+            sudo sed -i "s/.*DB_HOST.*/define( 'DB_HOST', '${RDSInstance.Endpoint.Address}');/g" wordpress/wp-config.php
+
+            sudo mkdir wordpress/wp-content/uploads
+            sudo chmod 775 wordpress/wp-content/uploads
+            sudo mv 000-default.conf /etc/apache2/sites-enabled/
+            sudo apache2ctl restart
+            sudo mount /var/www/wordpress
+            sudo cp -r wordpress/* /var/www/wordpress
+            sudo service restart
+            (crontab -l 2>/dev/null || true; echo "*/5  * * * * stress -c 4 -t 300s") | crontab -
+            (crontab -l 2>/dev/null || true; echo "*/8  * * * * /home/ubuntu/stop.sh") | crontab -
+            sudo service cron restart
+            echo 'for i in $(ps -aux | grep stress | awk "{print $2}"); do kill -9 $i; done' >> ~/stop.sh
+            sudo chmod +x ~/stop.sh
+            sudo shutdown -h now
+
+      Tags: 
+      - Key: Name
+        Value: Wordpress-Gold
+#sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${FileSystemEFS}.efs.${AWS::Region}.amazonaws.com:/ /var/www/wordpress
+#sudo echo "*/5  * * * * stress -c 4 -t 120s" | crontab -
+# EFS Configuration
+################### EFS configuration ##########################
+  FileSystemEFS:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      FileSystemTags:
+        - Key: Name
+          Value: EFS-CF
+      PerformanceMode: generalPurpose
+################### EFS Target mount Private subnet 1 ##########
+  MountTarget1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystemEFS
+      SubnetId: !Ref PrivateSubnet1
+      SecurityGroups:
+        - Ref: EC2SecurityGroup
+################### EFS Target mount Private subnet 2 ##########
+  MountTarget2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystemEFS
+      SubnetId: !Ref PrivateSubnet2
+      SecurityGroups:
+        - Ref: EC2SecurityGroup
+################### EC2 Security group #########################
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EC2-SG
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        SourceSecurityGroupId:
+          Fn::GetAtt:
+          - ELBSecurityGroup
+          - GroupId
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 2049
+        ToPort: 2049
+        CidrIp: 0.0.0.0/0
+################### ELB Security group #########################
+  ELBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ELB Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+################### EC2 Target group ###########################
+  EC2TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 5
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /wp-login.php
+      HealthCheckTimeoutSeconds: 2
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: '200,301,302'
+      Name: EC2TargetGroup
+      Port: 80
+      Protocol: HTTP
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: '20'
+      VpcId: !Ref VPC
+################### ELB Lisener Load Balancer ##################
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref EC2TargetGroup
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+################### ELB application Load Balancer ##############
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+      - !Ref PublicSubnet1
+      - !Ref PublicSubnet2
+      SecurityGroups:
+        - !GetAtt ELBSecurityGroup.GroupId
+
+Outputs:
+   GoldInstanceID:
+    Description: The Gold Instance ID
+    Value: !Ref GoldInstance
+   DBEndpointID:
+    Description: The DB Endpoint ID
+    Value: !GetAtt "RDSInstance.Endpoint.Address"
+   ELBID:
+    Description: The ELB ID
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+   EFSID:
+    Description: The EFS DNS
+    Value: !Ref FileSystemEFS
