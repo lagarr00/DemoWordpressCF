@@ -423,7 +423,7 @@ Resources:
         KeyName: !Ref KeyNames
         SecurityGroupIds:
         - !Ref EC2SecurityGroup
-################### Auto Scaling Group            ##############
+################### Auto Scaling Group            #############
   ASG:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
