@@ -461,7 +461,7 @@ Resources:
         - Key: Purpose
           Value: WordpressGroup
           PropagateAtLaunch: false
-################### Auto Scaling Group High policy##############
+################### Auto Scaling Group High policy###############
   ASGScalingPolicyHigh:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
