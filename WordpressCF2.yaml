@@ -418,7 +418,7 @@ Resources:
     Properties:
       LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
       LaunchTemplateData:
-        ImageId: ami-071e310439e026492 # Put the ami-0105f2c530ac0df91 from gold image
+        ImageId: ami-0a0b269710c72a497 # Put the ami-0105f2c530ac0df91 from gold image
         InstanceType: t3.medium
         KeyName: !Ref KeyNames
         SecurityGroupIds:
