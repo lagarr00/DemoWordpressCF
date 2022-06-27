@@ -437,9 +437,9 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref ASGLaunchTemplate
         Version: !GetAtt ASGLaunchTemplate.LatestVersionNumber
-      MaxSize: 4
-      MinSize: 2
-      DesiredCapacity: 2
+      MaxSize: 6
+      MinSize: 4
+      DesiredCapacity: 4
       NewInstancesProtectedFromScaleIn: false
       TargetGroupARNs:
         - !Ref EC2TargetGroup
